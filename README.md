@@ -189,3 +189,7 @@ $ echo "Packets don't lie. Measurements matter."
 **END OF TRANSMISSION**
 
 </div>
+
+## Documentation
+
+- [Ubuntu Setup & Verification Guide](docs/UBUNTU_SETUP_GUIDE.md)
