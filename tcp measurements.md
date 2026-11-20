@@ -36,3 +36,41 @@ abeeha@abeeha-VirtualBox:~/cn-tcp-lab$ grep ',BBR,' results/cwnd_rtt_timeseries.
 2026-11-21 01:04:17.921445,BBR,1.926,258,252.007,0
 2026-11-21 01:04:18.132104,BBR,2.136,180,111.646,0
 
+
+
+
+
+
+
+
+
+
+
+. Summary of measurements
+Metric	Reno	CUBIC	BBR
+Samples	145	146	144
+Minimum cwnd	10	10	4
+Maximum cwnd	506	336	258
+Average cwnd	156.39	165.66	172.36
+Minimum RTT	101.31 ms	101.60 ms	101.51 ms
+Maximum RTT	358.93 ms	320.88 ms	258.19 ms
+Average RTT	191.24 ms	205.29 ms	117.27 ms
+
+
+2. What do these results suggest?
+Reno
+- Reached the largest maximum congestion window.
+- Experienced substantial RTT variation.
+- Its average RTT was approximately 191 ms.
+CUBIC
+- Had the highest average RTT of the three.
+- Reached a maximum cwnd of 336 segments.
+- Showed substantial queueing delay.
+BBR
+- Had the highest average cwnd.
+- Had the lowest average RTT: 117.27 ms.
+- Its maximum RTT was also the lowest.
+An interesting preliminary observation is that BBR maintained a substantially lower average RTT despite having a slightly higher average cwnd.
+
+These are observations from one 30-second run per algorithm, not statistical conclusions across repeated experiments.
+
