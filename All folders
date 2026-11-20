@@ -1,0 +1,11 @@
+| Folder | Purpose |
+|---|---|
+| `topology` | Mininet network topology code |
+| `measurement` | Scripts to collect network measurements |
+| `experiments` | Experiment configurations and execution scripts |
+| `simulator` | Tahoe and Reno comparison simulator |
+| `analysis` | Calculations and data analysis |
+| `results` | Raw experimental results |
+| `captures` | Network packet captures |
+| `plots` | Performance graphs |
+| `tables` | Result comparison tables |
