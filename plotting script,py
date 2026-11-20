@@ -1,0 +1,85 @@
+cat > analysis/plot_cwnd_rtt.py <<'PY'
+import csv
+import os
+import matplotlib.pyplot as plt
+
+INPUT_FILE = "results/cwnd_rtt_timeseries.csv"
+
+os.makedirs("plots", exist_ok=True)
+
+data = {}
+
+with open(INPUT_FILE, "r") as file:
+    reader = csv.DictReader(file)
+
+    for row in reader:
+        algorithm = row["algorithm"]
+
+        if algorithm not in data:
+            data[algorithm] = {
+                "time": [],
+                "cwnd": [],
+                "rtt": []
+            }
+
+        data[algorithm]["time"].append(
+            float(row["time_seconds"])
+        )
+
+        data[algorithm]["cwnd"].append(
+            int(row["cwnd_segments"])
+        )
+
+        data[algorithm]["rtt"].append(
+            float(row["rtt_ms"])
+        )
+
+
+plt.figure(figsize=(10, 6))
+
+for algorithm in ["RENO", "CUBIC", "BBR"]:
+    plt.plot(
+        data[algorithm]["time"],
+        data[algorithm]["cwnd"],
+        label=algorithm
+    )
+
+plt.title("TCP Congestion Window vs Time")
+plt.xlabel("Time (seconds)")
+plt.ylabel("Congestion Window (segments)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("plots/cwnd_vs_time.png", dpi=300)
+
+plt.close()
+
+
+plt.figure(figsize=(10, 6))
+
+for algorithm in ["RENO", "CUBIC", "BBR"]:
+    plt.plot(
+        data[algorithm]["time"],
+        data[algorithm]["rtt"],
+        label=algorithm
+    )
+
+plt.title("TCP RTT vs Time")
+plt.xlabel("Time (seconds)")
+plt.ylabel("Round Trip Time (ms)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("plots/rtt_vs_time.png", dpi=300)
+
+plt.close()
+
+print("Graphs generated successfully!")
+print("Saved: plots/cwnd_vs_time.png")
+print("Saved: plots/rtt_vs_time.png")
+PY
+
+///see the graphs  : xdg-open plots/cwnd_vs_time.png
+
+
+
