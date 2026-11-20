@@ -330,3 +330,16 @@ Switch to TCP CUBIC:
 
 run : h1 sysctl -w net.ipv4.tcp_congestion_control=cubic
 run: h1 iperf3 -c 10.0.4.2 -t 30 -i 1
+
+
+Switch to TCP BBR
+run : h1 sysctl -w net.ipv4.tcp_congestion_control=bbr
+
+Start the server on Host 3
+At mininet>, run:
+h3 iperf3 -s &
+
+run: h1 iperf3 -c 10.0.4.2 -t 30 -i 1
+
+
+BBR result :
