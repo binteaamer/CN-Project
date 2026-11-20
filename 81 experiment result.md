@@ -1113,3 +1113,146 @@ ALL EXPERIMENTS COMPLETED
 Completed: 81 / 81
 CSV file: results/tcp_matrix_results.csv
 abeeha@abeeha-VirtualBox:~/cn-tcp-lab$ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Comparions :
+
+
+ALGORITHM | RTT | BUFFER | AVG RECEIVER Mbps | AVG SENDER Mbps | AVG RETRANSMISSIONS
+-----------------------------------------------------------------------------------------------
+BBR      | 20 ms | 0.5 x |             9.089 |           9.237 | 713.3
+CUBIC    | 20 ms | 0.5 x |             8.392 |           8.469 | 122.3
+RENO     | 20 ms | 0.5 x |             8.264 |           8.341 | 139.0
+BBR      | 20 ms | 1   x |             9.214 |           9.389 | 61.3
+CUBIC    | 20 ms | 1   x |             9.271 |           9.459 | 104.7
+RENO     | 20 ms | 1   x |             9.250 |           9.436 | 112.7
+BBR      | 20 ms | 2   x |             9.177 |           9.343 | 0.0
+CUBIC    | 20 ms | 2   x |             9.316 |           9.448 | 53.3
+RENO     | 20 ms | 2   x |             9.285 |           9.716 | 191.7
+BBR      | 50 ms | 0.5 x |             9.148 |           9.553 | 153.3
+CUBIC    | 50 ms | 0.5 x |             9.138 |           9.343 | 112.0
+RENO     | 50 ms | 0.5 x |             8.675 |           8.900 | 99.0
+BBR      | 50 ms | 1   x |             9.089 |           9.506 | 34.0
+CUBIC    | 50 ms | 1   x |             9.286 |           9.587 | 117.3
+RENO     | 50 ms | 1   x |             9.279 |           9.739 | 161.3
+BBR      | 50 ms | 2   x |             9.159 |           9.517 | 0.0
+CUBIC    | 50 ms | 2   x |             9.255 |           9.576 | 33.3
+RENO     | 50 ms | 2   x |             9.295 |          10.205 | 427.3
+BBR      | 100ms | 0.5 x |             9.039 |           9.891 | 235.3
+CUBIC    | 100ms | 0.5 x |             9.064 |           9.494 | 197.0
+RENO     | 100ms | 0.5 x |             8.574 |           9.075 | 159.0
+BBR      | 100ms | 1   x |             9.077 |           9.855 | 80.0
+CUBIC    | 100ms | 1   x |             9.214 |           9.820 | 205.7
+RENO     | 100ms | 1   x |             9.089 |          10.065 | 338.7
+BBR      | 100ms | 2   x |             9.053 |           9.809 | 0.0
+CUBIC    | 100ms | 2   x |             9.176 |           9.925 | 49.7
+RENO     | 100ms | 2   x |             9.226 |          11.347 | 851.3
+
+
+
+et's interpret what the results are telling us before making graphs.
+1. Initial observations
+Receiver throughput
+Receiver throughput is our main metric for comparing how much useful data actually reached the destination.
+- CUBIC: Generally performs consistently, with averages around 8.39–9.32 Mbps.
+- RENO: Performs relatively poorly with smaller buffers, especially at 100 ms RTT and 0.5× BDP (8.574 Mbps).
+- BBR: Usually achieves around 9 Mbps, but its results need closer inspection.
+Retransmissions
+Some interesting patterns:
+- Reno reaches an average of 851.3 retransmissions at 100 ms RTT and 2× BDP.
+- CUBIC records 49.7 retransmissions in the same configuration.
+- BBR records zero retransmissions at 2× BDP across all three RTT values.
+- However, BBR records 713.3 retransmissions at 20 ms RTT and 0.5× BDP. This is an unusual result that we should investigate.
+2. One important issue to investigate
+Look at these sender throughput averages:
+Algorithm	RTT	Buffer	Sender throughput
+Reno	100 ms	2×	11.347 Mbps
+Reno	50 ms	2×	10.205 Mbps
+CUBIC	100 ms	2×	9.925 Mbps
+
+
+Our configured bottleneck is 10 Mbps.
+
+Sender throughput exceeding 10 Mbps is worth investigating. It doesn't automatically mean the experiment failed, but we should understand how the script measures sender and receiver throughput before using these figures in the report.
+
+
+
+. Why sender throughput can exceed 10 Mbps
+The configured bottleneck is 10 Mbps, but sum_sent is not necessarily equivalent to useful data delivered across the bottleneck.
+
+Retransmissions, measurement intervals and traffic shaping can affect the relationship between sender and receiver measurements.
+
+For our main comparison, we'll use receiver throughput as goodput and report sender throughput separately.
+
+However, we should investigate the unusually high Reno retransmissions and BBR's results rather than assume they are expected.
+
+
+
+
+
+. Final diagnostic comparison
+Configuration
+- Bottleneck: 10 Mbps
+- RTT: 100 ms
+- Queue size: 167 packets (2×BDP)
+- Duration: 10 seconds
+Measurement	Reno	CUBIC	BBR
+Sender throughput (Mbps)	16.247	11.007	11.112
+Receiver throughput (Mbps)	9.015	8.877	9.022
+iperf3 retransmissions	853	27	0
+R1 queue drops	417	19	0
+R2 queue drops	0	0	0
+
+
+Note: Reno's queue-drop count comes from its earlier packet-capture diagnostic; CUBIC and BBR counts come from their respective diagnostic runs.
+2. What can we conclude?
+Reno
+- Highest retransmission count.
+- Highest observed queue drops.
+- Receiver throughput around 9 Mbps.
+CUBIC
+- Much fewer retransmissions than Reno.
+- Only 19 queue drops.
+- Similar receiver throughput.
+BBR
+- No reported retransmissions.
+- No observed queue drops.
+- Highest receiver throughput among these three runs, although the difference is very small.
+Interesting finding: BBR achieved approximately 9 Mbps without queue drops in this particular test. This is consistent with BBR's model-based congestion-control approach, which aims to estimate bottleneck bandwidth and round-trip propagation time.
+
+However, these are individual diagnostic runs. We should not present them as statistically conclusive evidence.
+3. Where we stand in the project
+Completed:
+- Ubuntu and Mininet setup.
+- Dumbbell topology.
+- 81-experiment matrix.
+- CSV validation and backup.
+- Reno packet-capture analysis.
+- Reno, CUBIC and BBR diagnostic comparisons.
+- Bottleneck queue-drop measurements.
+Still pending:
+- Congestion window (cwnd) and RTT measurements over time.
+- Competing TCP flows.
+- Jain's fairness index.
+- Tahoe vs Reno simulator.
+- Graphs, statistical analysis and final report.
