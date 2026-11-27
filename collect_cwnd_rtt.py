@@ -19,7 +19,7 @@ SAMPLE_INTERVAL = 0.05
 
 ALGORITHMS = ["reno", "cubic", "bbr"]
 
-OUTPUT_FILE = "results/cwnd_rtt_timeseries_updated.csv"
+OUTPUT_FILE = "results/cwnd_rtt_timeseries_50ms.csv"
 
 
 def collect_measurements(h1, algorithm):
@@ -49,8 +49,14 @@ def collect_measurements(h1, algorithm):
             )
 
             start_time = time.monotonic()
+            next_sample = start_time
 
             while process.poll() is None:
+
+                current_time = time.monotonic()
+
+                if current_time < next_sample:
+                    time.sleep(next_sample - current_time)
 
                 result = h1.cmd("ss -tin dst " + SERVER_IP)
 
@@ -123,7 +129,12 @@ def collect_measurements(h1, algorithm):
                             "retransmissions": retransmissions
                         })
 
-                time.sleep(SAMPLE_INTERVAL)
+                next_sample += SAMPLE_INTERVAL
+
+                current_time = time.monotonic()
+
+                if current_time > next_sample:
+                    next_sample = current_time + SAMPLE_INTERVAL
 
             process.wait()
 
