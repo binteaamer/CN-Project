@@ -1,0 +1,177 @@
+1. Start with the project overview (1 minute)
+Open your Ubuntu terminal and navigate to the project:
+cd ~/cn-tcp-lab
+
+Show your teacher the README:
+cat README.md
+
+You don't need to read the entire README. Explain:
+Our project compares three TCP congestion control algorithms: Reno, CUBIC and BBR. We created a controlled network environment using Mininet, with a 10 Mbps bottleneck link. We measured throughput, retransmissions, congestion window, RTT and fairness to understand how these algorithms behave under different network conditions.
+
+2. Demonstrate your network topology (1–2 minutes)
+Show the topology code:
+sed -n '1,240p' topology/dumbbell.py
+
+Explain the important components:
+- Four hosts: h1, h2, h3 and h4.
+- Two routers: r1 and r2.
+- A shared 10 Mbps bottleneck between the routers.
+- Two independent flows can travel through the same bottleneck.
+Your explanation:
+We use a dumbbell topology because it allows multiple TCP flows to compete for the same bottleneck. This makes it possible to observe congestion and compare how different algorithms respond to it.
+
+You can draw this simple diagram on the board:
+ h1 --------\
+             r1 ===== r2 -------- h3
+ h2 --------/             \------ h4
+              10 Mbps
+             Bottleneck
+
+3. Demonstrate the main experiment (2 minutes)
+Show the experiment code:
+sed -n '1,220p' measurement/run_experiment.py
+
+Explain your experimental parameters:
+Parameter	Values
+Algorithms	Reno, CUBIC, BBR
+RTT	20, 50, 100 ms
+Buffer size	0.5×, 1×, 2× BDP
+Repetitions	3
+Test duration	30 seconds
+
+
+This gives:
+
+3 × 3 × 3 × 3 = 81 experiments.
+
+Tell your teacher:
+We automated the experiments instead of manually running every combination. Each configuration was repeated three times to reduce the effect of random variations.
+
+Show that the results exist:
+wc -l results/tcp_matrix_results.csv
+
+Expected output:
+82 results/tcp_matrix_results.csv
+
+That's 81 experimental records plus the header.
+
+Important: Don't rerun the entire experiment during your demonstration. It takes time, and you've already collected the results.
+4. Show your results and graphs (2 minutes)
+This is probably the most important part of your demonstration.
+
+Open the plots folder:
+ls -lh plots/
+
+Show the graphs individually:
+xdg-open plots/throughput_comparison.png
+
+xdg-open plots/retransmissions_comparison.png
+
+xdg-open plots/throughput_buffer_20ms.png
+
+xdg-open plots/throughput_buffer_50ms.png
+
+xdg-open plots/throughput_buffer_100ms.png
+
+Explain:
+- Throughput measures how much useful data reaches the receiver.
+- Retransmissions indicate TCP packets that needed retransmission.
+- Different RTTs and buffer sizes affect how algorithms perform.
+Your teacher may ask which algorithm performed best.
+
+Don't simply say one algorithm is always best. Explain that performance depends on the network conditions and the metric being considered.
+5. Demonstrate congestion window and RTT measurements (1 minute)
+Show:
+xdg-open plots/cwnd_vs_time.png
+
+Then:
+xdg-open plots/rtt_vs_time.png
+
+Explain:
+We also collected time-series measurements of the congestion window and round-trip time. This helps us understand how the algorithms behave over time rather than relying only on their final throughput.
+
+Mention that this particular experiment was conducted at 100 ms RTT with an 83-packet queue.
+6. Demonstrate fairness between competing flows (2 minutes)
+This is another strong part of your project.
+
+Show:
+xdg-open plots/fairness_comparison.png
+
+Then:
+xdg-open plots/individual_flow_throughput.png
+
+And:
+xdg-open plots/total_throughput_fairness.png
+
+Explain:
+We introduced two simultaneous TCP flows that compete for the same bottleneck. We measured the throughput received by each flow and calculated Jain's Fairness Index.
+
+Your actual average results:
+Algorithm	Average fairness
+Reno	0.9733
+CUBIC	0.9383
+BBR	0.9944
+
+
+Explain that a fairness index closer to 1 indicates a more equal distribution of throughput.
+
+In your tested configuration, BBR achieved the highest average fairness.
+
+Be precise: these fairness results come from three repetitions at 100 ms RTT and a 1×BDP buffer.
+7. Demonstrate packet captures (1 minute)
+Show your capture files:
+ls -lh captures/
+
+Explain:
+We also captured actual TCP traffic using tcpdump and analyzed the packet captures using Wireshark's command-line analyzer, TShark. This allowed us to inspect retransmissions, duplicate ACKs and TCP behavior at packet level.
+
+You can show one capture's packet summary:
+tshark -r captures/reno_test.pcap | head -15
+
+This demonstrates that you didn't rely exclusively on the CSV results.
+8. Demonstrate the Tahoe vs Reno simulator (1 minute)
+Show the source:
+sed -n '1,220p' simulator/tahoe_reno.py
+
+Show its graph:
+xdg-open plots/tahoe_vs_reno.png
+
+Explain:
+In addition to the experimental comparison, we created a simplified educational simulator to visualize the difference between TCP Tahoe and TCP Reno when packet loss occurs.
+
+Make sure the simulator's actual implementation matches whatever features you claim, particularly Fast Retransmit and Fast Recovery.
+Recommended demonstration order
+Order	Component	Time
+1	Project overview and README	1 min
+2	Mininet topology	2 min
+3	Main experiment and methodology	2 min
+4	Throughput and retransmission graphs	2 min
+5	CWND and RTT	1 min
+6	Fairness experiment	2 min
+7	Packet captures	1 min
+8	Tahoe vs Reno simulator	1 min
+	Total	12 minutes
+
+
+Questions your teacher might ask
+Prepare for these especially:
+1. Why did you choose Reno, CUBIC and BBR?
+2. What is TCP congestion control?
+3. What is a bottleneck link?
+4. What is RTT, and why did you test different RTTs?
+5. What is BDP, and how did you calculate buffer sizes?
+6. Why did you repeat each experiment three times?
+7. Why is receiver throughput more meaningful than sender throughput?
+8. What is Jain's Fairness Index?
+9. Why did BBR achieve better fairness in your experiment?
+10. What is the difference between Tahoe and Reno?
+11. How does Mininet simulate a network?
+12. How did you measure congestion window and RTT?
+My biggest recommendation
+Don't make your demonstration a code-reading session.
+
+Show your topology, explain your experiment, present the graphs, and interpret the results. Open the code only when explaining how you implemented something or when your teacher asks.
+
+Your graphs and experimental findings are the strongest evidence that you actually built and tested the system.
+
+I'd also recommend preparing a short PowerPoint with the topology, experimental methodology, four or five key graphs, and conclusions. That will make the demonstration considerably more organized.
