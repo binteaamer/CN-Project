@@ -15,11 +15,11 @@ from measurement.run_experiment import (
 RTT_MS = 100
 QUEUE_SIZE = 83
 DURATION = 30
-SAMPLE_INTERVAL = 0.2
+SAMPLE_INTERVAL = 0.05
 
 ALGORITHMS = ["reno", "cubic", "bbr"]
 
-OUTPUT_FILE = "results/cwnd_rtt_timeseries.csv"
+OUTPUT_FILE = "results/cwnd_rtt_timeseries_updated.csv"
 
 
 def collect_measurements(h1, algorithm):
@@ -54,29 +54,74 @@ def collect_measurements(h1, algorithm):
 
                 result = h1.cmd("ss -tin dst " + SERVER_IP)
 
-                cwnd_match = re.search(r"cwnd:(\d+)", result)
-                rtt_match = re.search(r"rtt:([\d.]+)", result)
-                retrans_match = re.search(r"retrans:(\d+)/(\d+)", result)
+                connections = re.split(r"(?=ESTAB)", result)
 
-                if cwnd_match and rtt_match:
+                data_connection = None
+                largest_bytes = -1
 
-                    elapsed = time.monotonic() - start_time
+                for connection in connections:
 
-                    retransmissions = 0
+                    bytes_match = re.search(
+                        r"bytes_sent:(\d+)", connection
+                    )
 
-                    if retrans_match:
-                        retransmissions = int(retrans_match.group(1))
+                    if bytes_match:
 
-                    samples.append({
-                        "timestamp": datetime.now().strftime(
-                            "%Y-%m-%d %H:%M:%S.%f"
-                        ),
-                        "algorithm": algorithm.upper(),
-                        "time_seconds": round(elapsed, 3),
-                        "cwnd_segments": int(cwnd_match.group(1)),
-                        "rtt_ms": round(float(rtt_match.group(1)), 3),
-                        "retransmissions": retransmissions
-                    })
+                        sent_bytes = int(bytes_match.group(1))
+
+                        if sent_bytes > largest_bytes:
+                            largest_bytes = sent_bytes
+                            data_connection = connection
+
+                if data_connection:
+
+                    cwnd_match = re.search(
+                        r"cwnd:(\d+)", data_connection
+                    )
+
+                    ssthresh_match = re.search(
+                        r"ssthresh:(\d+)", data_connection
+                    )
+
+                    rtt_match = re.search(
+                        r"rtt:([\d.]+)", data_connection
+                    )
+
+                    retrans_match = re.search(
+                        r"retrans:(\d+)/(\d+)", data_connection
+                    )
+
+                    if cwnd_match and rtt_match:
+
+                        elapsed = time.monotonic() - start_time
+
+                        retransmissions = 0
+
+                        if retrans_match:
+                            retransmissions = int(
+                                retrans_match.group(1)
+                            )
+
+                        ssthresh = ""
+
+                        if ssthresh_match:
+                            ssthresh = int(
+                                ssthresh_match.group(1)
+                            )
+
+                        samples.append({
+                            "timestamp": datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S.%f"
+                            ),
+                            "algorithm": algorithm.upper(),
+                            "time_seconds": round(elapsed, 3),
+                            "cwnd_segments": int(cwnd_match.group(1)),
+                            "ssthresh_segments": ssthresh,
+                            "rtt_ms": round(
+                                float(rtt_match.group(1)), 3
+                            ),
+                            "retransmissions": retransmissions
+                        })
 
                 time.sleep(SAMPLE_INTERVAL)
 
@@ -132,6 +177,7 @@ def main():
                     "algorithm",
                     "time_seconds",
                     "cwnd_segments",
+                    "ssthresh_segments",
                     "rtt_ms",
                     "retransmissions"
                 ]
